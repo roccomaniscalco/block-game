@@ -1,8 +1,7 @@
 import { DndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { ClassValue, clsx } from "clsx";
 import { ReactNode, useState } from "react";
-import { twMerge } from "tailwind-merge";
+import { cn } from "./utils";
 
 export default function App() {
   return (
@@ -104,8 +103,4 @@ export function Droppable(props: DroppableProps) {
       {props.children}
     </div>
   );
-}
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
 }
