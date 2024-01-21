@@ -12,65 +12,65 @@ export default function App() {
 }
 
 function Game() {
-  const INITIAL_CELLS = Array.from({ length: 9 }, () =>
+  const INITIAL_TILES = Array.from({ length: 9 }, () =>
     Array(9).fill(false),
   ) as boolean[][];
-  const [cells, setCells] = useState(INITIAL_CELLS);
+  const [tiles, setTiles] = useState(INITIAL_TILES);
 
-  const draggable = (
-    <Draggable id="tile">
+  const piece = (
+    <Piece id="tile">
       <div className="h-10 w-10 bg-red-400" />
-    </Draggable>
+    </Piece>
   );
 
   return (
     <DndContext
       onDragEnd={(event) => {
-        if (!event.over) return cells;
-        const [rowI, colI] = event.over.id.split(",").map(Number);
-        setCells(cells.with(rowI, cells[rowI].with(colI, true)));
+        if (!event.over) return tiles;
+        const [y, x] = event.over.id.split(",").map(Number);
+        setTiles(tiles.with(y, tiles[y].with(x, true)));
       }}
     >
-      <Board cells={cells} />
-      {draggable}
+      <Board tiles={tiles} />
+      {piece}
     </DndContext>
   );
 }
 
 type BoardProps = {
-  cells: boolean[][];
+  tiles: boolean[][];
 };
 function Board(props: BoardProps) {
-  const isLightSquare = (rowI: number, colI: number) => {
-    const isInOddRow = Math.floor(rowI / 3) % 2 === 1;
-    const isInOddCol = Math.floor(colI / 3) % 2 === 1;
+  const isLightSquare = (y: number, x: number) => {
+    const isInOddRow = Math.floor(y / 3) % 2 === 1;
+    const isInOddCol = Math.floor(x / 3) % 2 === 1;
     return isInOddRow !== isInOddCol;
   };
 
   return (
     <div className="m-auto grid aspect-square max-w-xl grid-cols-9 grid-rows-9 gap-1 p-3">
-      {props.cells.map((row, rowI) =>
-        row.map((cell, colI) => (
-          <Droppable id={`${rowI},${colI}`} key={colI}>
+      {props.tiles.map((row, y) =>
+        row.map((tile, x) => (
+          <Tile id={`${y},${x}`} key={x}>
             <div
               className={cn(
                 "h-full w-full rounded-md",
-                isLightSquare(rowI, colI) ? "bg-gray-700" : "bg-gray-800",
-                cell && "bg-red-400",
+                isLightSquare(y, x) ? "bg-gray-700" : "bg-gray-800",
+                tile && "bg-red-400",
               )}
             />
-          </Droppable>
+          </Tile>
         )),
       )}
     </div>
   );
 }
 
-type DraggableProps = {
+type PieceProps = {
   id: string;
   children: ReactNode;
 };
-function Draggable(props: DraggableProps) {
+function Piece(props: PieceProps) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: props.id,
   });
@@ -86,11 +86,11 @@ function Draggable(props: DraggableProps) {
   );
 }
 
-type DroppableProps = {
+type TileProps = {
   id: string;
   children: ReactNode;
 };
-export function Droppable(props: DroppableProps) {
+export function Tile(props: TileProps) {
   const { isOver, setNodeRef } = useDroppable({
     id: props.id,
   });
