@@ -70,10 +70,7 @@ type TileProps = {
 export function Tile(props: TileProps) {
   const { isOver, setNodeRef } = useDroppable({
     id: `${props.x},${props.y}`,
-    data: {
-      x: props.x,
-      y: props.y,
-    },
+    data: { x: props.x, y: props.y },
   });
 
   const isLightSquare = (y: number, x: number) => {
