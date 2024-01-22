@@ -16,6 +16,7 @@ function Game() {
     Array(9).fill(false),
   ) as boolean[][];
   const [tiles, setTiles] = useState(INITIAL_TILES);
+  const [pieceCount, setPieceCount] = useState(3);
 
   return (
     <DndContext
@@ -24,10 +25,11 @@ function Game() {
         const { x, y } = event.over.data.current as { x: number; y: number };
         if (tiles[y][x]) return tiles;
         setTiles(tiles.with(y, tiles[y].with(x, true)));
+        setPieceCount(pieceCount - 1);
       }}
     >
       <Board tiles={tiles} />
-      <Piece />
+      <Pieces count={pieceCount} />
     </DndContext>
   );
 }
@@ -41,6 +43,19 @@ function Board(props: BoardProps) {
       {props.tiles.map((row, y) =>
         row.map((tile, x) => <Tile x={x} y={y} key={x} isFilled={tile} />),
       )}
+    </div>
+  );
+}
+
+type PiecesProps = {
+  count: number;
+};
+function Pieces(props: PiecesProps) {
+  return (
+    <div className="m-auto flex content-center w-40 gap-5">
+      {[...Array(props.count).keys()].map((num) => (
+        <Piece key={num} />
+      ))}
     </div>
   );
 }
@@ -86,7 +101,7 @@ export function Tile(props: TileProps) {
         "h-full w-full rounded-md",
         isLightSquare(props.y, props.x) ? "bg-gray-700" : "bg-gray-800",
         props.isFilled && "bg-red-400",
-        isOver && "brightness-150",
+        isOver && !props.isFilled && "brightness-150",
       )}
     />
   );
