@@ -21,7 +21,8 @@ function Game() {
     <DndContext
       onDragEnd={(event) => {
         if (!event.over) return tiles;
-        const [y, x] = event.over.id.split(",").map(Number);
+        const { x, y } = event.over.data.current as { x: number; y: number };
+        if (tiles[y][x]) return tiles;
         setTiles(tiles.with(y, tiles[y].with(x, true)));
       }}
     >
@@ -68,7 +69,11 @@ type TileProps = {
 };
 export function Tile(props: TileProps) {
   const { isOver, setNodeRef } = useDroppable({
-    id: `${props.y},${props.x}`,
+    id: `${props.x},${props.y}`,
+    data: {
+      x: props.x,
+      y: props.y,
+    },
   });
 
   const isLightSquare = (y: number, x: number) => {
