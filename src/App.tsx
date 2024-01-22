@@ -1,30 +1,26 @@
 import { DndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { useState } from "react";
-import { cn } from "./utils";
+import { array, cn, getObjectKeys } from "./utils";
 import SHAPES from "./shapes.json";
-
-type ShapeName = keyof typeof SHAPES;
 
 export default function App() {
   return <Game />;
 }
 
 function Game() {
-  const INITIAL_TILES = Array.from({ length: 9 }, () =>
-    Array(9).fill(false),
-  ) as boolean[][];
+  const INITIAL_TILES = array(9, array(9, false));
 
   const getRandomShape = () => {
-    const shapes = Object.keys(SHAPES) as ShapeName[];
+    const shapes = getObjectKeys(SHAPES);
     const randomShapeName = shapes[Math.floor(Math.random() * shapes.length)];
     return SHAPES[randomShapeName];
   };
 
-  const initialShape = [...Array(3).keys()].map(getRandomShape);
+  const initialShapes = array(3).map(getRandomShape);
 
   const [tiles, setTiles] = useState(INITIAL_TILES);
-  const [shapes, setShapes] = useState(initialShape);
+  const [shapes, setShapes] = useState(initialShapes);
 
   return (
     <DndContext
@@ -33,7 +29,7 @@ function Game() {
         const { x, y } = event.over.data.current as { x: number; y: number };
         if (tiles[y][x]) return tiles;
         setTiles(tiles.with(y, tiles[y].with(x, true)));
-        setShapes(shapes.toSpliced(event.active.id.split("-")[1], 1));
+        setShapes(shapes.toSpliced(Number(event.active.id), 1));
       }}
     >
       <main className="flex h-full flex-col gap-10 p-5">
@@ -67,7 +63,7 @@ function ShapePalette(props: ShapePaletteProps) {
     <div className="mx-auto flex w-full max-w-xl items-center justify-evenly gap-5">
       {props.shapes.map((shape, idx) => (
         <div className="flex flex-1 justify-center">
-          <Shape key={idx} id={`shape-${idx}`} shape={shape} />
+          <Shape key={idx} id={idx.toString()} shape={shape} />
         </div>
       ))}
     </div>
@@ -79,10 +75,9 @@ type ShapeProps = {
   shape: number[][];
 };
 function Shape(props: ShapeProps) {
-  const { attributes, listeners, setNodeRef, transform } =
-    useDraggable({
-      id: props.id,
-    });
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    id: props.id,
+  });
 
   return (
     <button
