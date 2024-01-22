@@ -2,9 +2,9 @@ import { DndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { useState } from "react";
 import { cn } from "./utils";
-import PIECES from "./pieces.json";
+import SHAPES from "./shapes.json";
 
-type PieceName = keyof typeof PIECES;
+type ShapeName = keyof typeof SHAPES;
 
 export default function App() {
   return <Game />;
@@ -15,16 +15,16 @@ function Game() {
     Array(9).fill(false),
   ) as boolean[][];
 
-  const getRandomPiece = () => {
-    const shapes = Object.keys(PIECES) as PieceName[];
+  const getRandomShape = () => {
+    const shapes = Object.keys(SHAPES) as ShapeName[];
     const randomShapeName = shapes[Math.floor(Math.random() * shapes.length)];
-    return PIECES[randomShapeName];
+    return SHAPES[randomShapeName];
   };
 
-  const initialPieces = [...Array(3).keys()].map(getRandomPiece);
+  const initialShape = [...Array(3).keys()].map(getRandomShape);
 
   const [tiles, setTiles] = useState(INITIAL_TILES);
-  const [pieces, setPieces] = useState(initialPieces);
+  const [shapes, setShapes] = useState(initialShape);
 
   return (
     <DndContext
@@ -33,12 +33,12 @@ function Game() {
         const { x, y } = event.over.data.current as { x: number; y: number };
         if (tiles[y][x]) return tiles;
         setTiles(tiles.with(y, tiles[y].with(x, true)));
-        setPieces(pieces.toSpliced(event.active.id.split("-")[1], 1));
+        setShapes(shapes.toSpliced(event.active.id.split("-")[1], 1));
       }}
     >
       <main className="flex h-full flex-col gap-10 p-5">
         <Board tiles={tiles} />
-        <Pieces pieces={pieces} />
+        <ShapePalette shapes={shapes} />
       </main>
     </DndContext>
   );
@@ -59,26 +59,26 @@ function Board(props: BoardProps) {
   );
 }
 
-type PiecesProps = {
-  pieces: number[][][];
+type ShapePaletteProps = {
+  shapes: number[][][];
 };
-function Pieces(props: PiecesProps) {
+function ShapePalette(props: ShapePaletteProps) {
   return (
     <div className="mx-auto flex w-full max-w-xl items-center justify-evenly gap-5">
-      {props.pieces.map((piece, idx) => (
+      {props.shapes.map((shape, idx) => (
         <div className="flex flex-1 justify-center">
-          <Piece key={idx} id={`piece-${idx}`} piece={piece} />
+          <Shape key={idx} id={`shape-${idx}`} shape={shape} />
         </div>
       ))}
     </div>
   );
 }
 
-type PieceProps = {
+type ShapeProps = {
   id: string;
-  piece: number[][];
+  shape: number[][];
 };
-function Piece(props: PieceProps) {
+function Shape(props: ShapeProps) {
   const { attributes, listeners, setNodeRef, transform } =
     useDraggable({
       id: props.id,
@@ -89,14 +89,14 @@ function Piece(props: PieceProps) {
       className={cn("grid gap-1")}
       style={{
         transform: CSS.Translate.toString(transform),
-        gridTemplateRows: `repeat(${props.piece.length}, 1fr)`,
-        gridTemplateColumns: `repeat(${props.piece[0].length}, 1fr)`,
+        gridTemplateRows: `repeat(${props.shape.length}, 1fr)`,
+        gridTemplateColumns: `repeat(${props.shape[0].length}, 1fr)`,
       }}
       ref={setNodeRef}
       {...listeners}
       {...attributes}
     >
-      {props.piece.map((row) =>
+      {props.shape.map((row) =>
         row.map((isFilled, x) => (
           <div
             className={cn(
