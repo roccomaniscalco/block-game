@@ -42,10 +42,7 @@ function Game() {
         const { x, y } = event.over.data.current as { x: number; y: number };
         if (tiles[y][x]) return tiles;
         setTiles(tiles.with(y, tiles[y].with(x, true)));
-        setShapes((prev) => {
-          delete prev[event.active.id];
-          return shapes;
-        });
+        setShapes({ ...shapes, [event.active.id]: null });
       }}
     >
       <main className="flex h-full flex-col gap-5 p-5">
@@ -72,11 +69,11 @@ function Board(props: BoardProps) {
 }
 
 type ShapePaletteProps = {
-  shapes: Record<string, number[][]>;
+  shapes: Record<string, number[][] | null>;
 };
 function ShapePalette(props: ShapePaletteProps) {
   return (
-    <div className="mx-auto flex h-32 w-full max-w-xl items-center justify-evenly rounded-md border border-gray-700 ">
+    <div className="mx-auto flex h-32 min-h-32 w-full max-w-xl rounded-md border border-gray-700 ">
       {Object.entries(props.shapes).map(([key, value]) => (
         <Shape id={key} shape={value} key={key} />
       ))}
@@ -86,7 +83,7 @@ function ShapePalette(props: ShapePaletteProps) {
 
 type ShapeProps = {
   id: string;
-  shape: number[][];
+  shape: number[][] | null;
 };
 function Shape(props: ShapeProps) {
   const {
@@ -114,14 +111,16 @@ function Shape(props: ShapeProps) {
     setDraggableActivatorNodeRef,
   );
 
+  if (!props.shape) return <div className="flex-1" />;
+
   return (
     <div
       ref={droppableRef}
       {...listeners}
-      className="flex h-full w-0 flex-1 cursor-pointer items-center justify-center border border-red-400"
+      className="flex h-full w-0 flex-1 cursor-pointer items-center justify-center"
     >
       <button
-        className={"transition-[width height] grid gap-1 duration-100"}
+        className={"grid gap-1 transition-all duration-75"}
         style={{
           transform: CSS.Translate.toString(transform),
           gridTemplateRows: `repeat(${props.shape.length}, 1fr)`,
@@ -131,7 +130,9 @@ function Shape(props: ShapeProps) {
                 width:
                   getTileRect().width * props.shape[0].length +
                   (props.shape[0].length - 1) * 4,
-                height: getTileRect().height * props.shape.length,
+                height:
+                  getTileRect().height * props.shape.length +
+                  (props.shape.length - 1) * 4,
               }
             : {}),
         }}
@@ -143,8 +144,9 @@ function Shape(props: ShapeProps) {
           row.map((isFilled, x) => (
             <div
               className={cn(
-                "h-7 w-7 rounded-md",
-                isFilled ? "bg-red-400" : "bg-gray",
+                "h-5 w-5",
+                isFilled && "bg-red-400 shadow-lg",
+                isDragging ? "rounded-lg" : "rounded-sm",
               )}
               key={x}
               style={
