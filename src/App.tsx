@@ -4,9 +4,10 @@ import {
   useDraggable,
   useDroppable,
 } from "@dnd-kit/core";
-import { restrictToWindowEdges, snapCenterToCursor } from "@dnd-kit/modifiers";
+import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { CSS, useCombinedRefs } from "@dnd-kit/utilities";
 import { useCallback, useState } from "react";
+import { snapBottomToCursor } from "./lib/dnd/snapBottomToCursor";
 import SHAPES from "./shapes.json";
 import { array, cn, getObjectKeys } from "./utils";
 
@@ -22,7 +23,7 @@ function Game() {
     const randomShapeName = shapes[Math.floor(Math.random() * shapes.length)];
     return SHAPES[randomShapeName];
   };
-  
+
   const initialShapes = {
     1: getRandomShape(),
     2: getRandomShape(),
@@ -34,7 +35,7 @@ function Game() {
 
   return (
     <DndContext
-      modifiers={[restrictToWindowEdges, snapCenterToCursor]}
+      modifiers={[restrictToWindowEdges, snapBottomToCursor]}
       collisionDetection={closestCenter}
       onDragEnd={(event) => {
         if (!event.over || !event.active) return tiles;
