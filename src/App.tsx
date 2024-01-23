@@ -1,8 +1,14 @@
-import { DndContext, useDraggable, useDroppable } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
-import { useState } from "react";
-import { array, cn, getObjectKeys } from "./utils";
+import {
+  DndContext,
+  closestCenter,
+  useDraggable,
+  useDroppable,
+} from "@dnd-kit/core";
+import { restrictToWindowEdges, snapCenterToCursor } from "@dnd-kit/modifiers";
+import { CSS, useCombinedRefs } from "@dnd-kit/utilities";
+import { useCallback, useState } from "react";
 import SHAPES from "./shapes.json";
+import { array, cn, getObjectKeys } from "./utils";
 
 export default function App() {
   return <Game />;
@@ -16,23 +22,32 @@ function Game() {
     const randomShapeName = shapes[Math.floor(Math.random() * shapes.length)];
     return SHAPES[randomShapeName];
   };
-
-  const initialShapes = array(3).map(getRandomShape);
+  
+  const initialShapes = {
+    1: getRandomShape(),
+    2: getRandomShape(),
+    3: getRandomShape(),
+  };
 
   const [tiles, setTiles] = useState(INITIAL_TILES);
   const [shapes, setShapes] = useState(initialShapes);
 
   return (
     <DndContext
+      modifiers={[restrictToWindowEdges, snapCenterToCursor]}
+      collisionDetection={closestCenter}
       onDragEnd={(event) => {
         if (!event.over || !event.active) return tiles;
         const { x, y } = event.over.data.current as { x: number; y: number };
         if (tiles[y][x]) return tiles;
         setTiles(tiles.with(y, tiles[y].with(x, true)));
-        setShapes(shapes.toSpliced(Number(event.active.id), 1));
+        setShapes((prev) => {
+          delete prev[event.active.id];
+          return shapes;
+        });
       }}
     >
-      <main className="flex h-full flex-col gap-10 p-5">
+      <main className="flex h-full flex-col gap-5 p-5">
         <Board tiles={tiles} />
         <ShapePalette shapes={shapes} />
       </main>
@@ -56,15 +71,13 @@ function Board(props: BoardProps) {
 }
 
 type ShapePaletteProps = {
-  shapes: number[][][];
+  shapes: Record<string, number[][]>;
 };
 function ShapePalette(props: ShapePaletteProps) {
   return (
-    <div className="mx-auto flex w-full max-w-xl items-center justify-evenly gap-5">
-      {props.shapes.map((shape, idx) => (
-        <div className="flex flex-1 justify-center">
-          <Shape key={idx} id={idx.toString()} shape={shape} />
-        </div>
+    <div className="mx-auto flex h-32 w-full max-w-xl items-center justify-evenly rounded-md border border-gray-700 ">
+      {Object.entries(props.shapes).map(([key, value]) => (
+        <Shape id={key} shape={value} key={key} />
       ))}
     </div>
   );
@@ -75,34 +88,77 @@ type ShapeProps = {
   shape: number[][];
 };
 function Shape(props: ShapeProps) {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDraggableNodeRef,
+    setActivatorNodeRef: setDraggableActivatorNodeRef,
+    transform,
+    isDragging,
+  } = useDraggable({
     id: props.id,
   });
+  const { setNodeRef: setDroppableNodeRef } = useDroppable({ id: props.id });
+
+  const getTileRect = useCallback(
+    () =>
+      document.getElementById("0,0")?.getClientRects()[0] ?? {
+        width: 0,
+        height: 0,
+      },
+    [],
+  );
+  const droppableRef = useCombinedRefs(
+    setDroppableNodeRef,
+    setDraggableActivatorNodeRef,
+  );
 
   return (
-    <button
-      className={cn("grid gap-1")}
-      style={{
-        transform: CSS.Translate.toString(transform),
-        gridTemplateRows: `repeat(${props.shape.length}, 1fr)`,
-        gridTemplateColumns: `repeat(${props.shape[0].length}, 1fr)`,
-      }}
-      ref={setNodeRef}
+    <div
+      ref={droppableRef}
       {...listeners}
-      {...attributes}
+      className="flex h-full w-0 flex-1 cursor-pointer items-center justify-center border border-red-400"
     >
-      {props.shape.map((row) =>
-        row.map((isFilled, x) => (
-          <div
-            className={cn(
-              "h-7 w-7 rounded-md",
-              isFilled ? "bg-red-400" : "bg-gray",
-            )}
-            key={x}
-          />
-        )),
-      )}
-    </button>
+      <button
+        className={"transition-[width height] grid gap-1 duration-100"}
+        style={{
+          transform: CSS.Translate.toString(transform),
+          gridTemplateRows: `repeat(${props.shape.length}, 1fr)`,
+          gridTemplateColumns: `repeat(${props.shape[0].length}, 1fr)`,
+          ...(isDragging
+            ? {
+                width:
+                  getTileRect().width * props.shape[0].length +
+                  (props.shape[0].length - 1) * 4,
+                height: getTileRect().height * props.shape.length,
+              }
+            : {}),
+        }}
+        ref={setDraggableNodeRef}
+        {...listeners}
+        {...attributes}
+      >
+        {props.shape.map((row) =>
+          row.map((isFilled, x) => (
+            <div
+              className={cn(
+                "h-7 w-7 rounded-md",
+                isFilled ? "bg-red-400" : "bg-gray",
+              )}
+              key={x}
+              style={
+                isDragging
+                  ? {
+                      width: getTileRect().width,
+                      height: getTileRect().height,
+                    }
+                  : {}
+              }
+            />
+          )),
+        )}
+      </button>
+    </div>
   );
 }
 
@@ -125,6 +181,7 @@ export function Tile(props: TileProps) {
 
   return (
     <div
+      id={`${props.x},${props.y}`}
       ref={setNodeRef}
       className={cn(
         "h-full w-full rounded-md",
