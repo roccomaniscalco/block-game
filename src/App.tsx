@@ -6,7 +6,7 @@ import {
 } from "@dnd-kit/core";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { CSS, useCombinedRefs } from "@dnd-kit/utilities";
-import { useCallback, useState } from "react";
+import { memo, useCallback, useState } from "react";
 import { snapBottomToCursor } from "./lib/dnd/snapBottomToCursor";
 import SHAPES from "./shapes.json";
 import { array, cn, getObjectKeys } from "./utils";
@@ -61,7 +61,9 @@ function Board(props: BoardProps) {
     <div className="min-h-0">
       <div className="mx-auto grid aspect-square max-h-full max-w-xl grid-cols-9 grid-rows-9 gap-1">
         {props.tiles.map((row, y) =>
-          row.map((tile, x) => <Tile x={x} y={y} key={x} isFilled={tile} />),
+          row.map((tile, x) => (
+            <Tile x={x} y={y} key={`${x},${y}`} isFilled={tile} />
+          )),
         )}
       </div>
     </div>
@@ -98,20 +100,16 @@ function Shape(props: ShapeProps) {
   });
   const { setNodeRef: setDroppableNodeRef } = useDroppable({ id: props.id });
 
-  const getTileRect = useCallback(
-    () =>
-      document.getElementById("0,0")?.getClientRects()[0] ?? {
-        width: 0,
-        height: 0,
-      },
-    [],
-  );
+  const getTileRect = () =>
+    document.getElementById("0,0")?.getClientRects()[0] ?? {
+      width: 0,
+      height: 0,
+    };
+
   const droppableRef = useCombinedRefs(
     setDroppableNodeRef,
     setDraggableActivatorNodeRef,
   );
-
-  if (!props.shape) return <div className="flex-1" />;
 
   return (
     <div
@@ -119,48 +117,52 @@ function Shape(props: ShapeProps) {
       {...listeners}
       className="flex h-full w-0 flex-1 cursor-pointer items-center justify-center"
     >
-      <button
-        className={"grid gap-1 transition-all duration-75"}
-        style={{
-          transform: CSS.Translate.toString(transform),
-          gridTemplateRows: `repeat(${props.shape.length}, 1fr)`,
-          gridTemplateColumns: `repeat(${props.shape[0].length}, 1fr)`,
-          ...(isDragging
-            ? {
-                width:
-                  getTileRect().width * props.shape[0].length +
-                  (props.shape[0].length - 1) * 4,
-                height:
-                  getTileRect().height * props.shape.length +
-                  (props.shape.length - 1) * 4,
-              }
-            : {}),
-        }}
-        ref={setDraggableNodeRef}
-        {...listeners}
-        {...attributes}
-      >
-        {props.shape.map((row) =>
-          row.map((isFilled, x) => (
-            <div
-              className={cn(
-                "h-5 w-5",
-                isFilled && "bg-red-400 shadow-lg",
-                isDragging ? "rounded-lg" : "rounded-sm",
-              )}
-              key={x}
-              style={
-                isDragging
-                  ? {
-                      width: getTileRect().width,
-                      height: getTileRect().height,
-                    }
-                  : {}
-              }
-            />
-          )),
-        )}
-      </button>
+      {!props.shape ? (
+        <div className="flex" />
+      ) : (
+        <button
+          className="grid gap-1 transition-all duration-75"
+          style={{
+            transform: CSS.Translate.toString(transform),
+            gridTemplateRows: `repeat(${props.shape.length}, 1fr)`,
+            gridTemplateColumns: `repeat(${props.shape[0].length}, 1fr)`,
+            ...(isDragging
+              ? {
+                  width:
+                    getTileRect().width * props.shape[0].length +
+                    (props.shape[0].length - 1) * 4,
+                  height:
+                    getTileRect().height * props.shape.length +
+                    (props.shape.length - 1) * 4,
+                }
+              : {}),
+          }}
+          ref={setDraggableNodeRef}
+          {...listeners}
+          {...attributes}
+        >
+          {props.shape.map((row) =>
+            row.map((isFilled, x) => (
+              <div
+                className={cn(
+                  "h-5 w-5",
+                  isFilled && "bg-red-400 shadow-lg",
+                  isDragging ? "rounded-lg" : "rounded-sm",
+                )}
+                key={x}
+                style={
+                  isDragging
+                    ? {
+                        width: getTileRect().width,
+                        height: getTileRect().height,
+                      }
+                    : {}
+                }
+              />
+            )),
+          )}
+        </button>
+      )}
     </div>
   );
 }
