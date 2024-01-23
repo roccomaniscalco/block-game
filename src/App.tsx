@@ -1,12 +1,8 @@
-import {
-  DndContext,
-  closestCenter,
-  useDraggable,
-  useDroppable,
-} from "@dnd-kit/core";
+import { DndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { CSS, useCombinedRefs } from "@dnd-kit/utilities";
 import { useState } from "react";
+import { closestOrigin } from "./lib/dnd/closestOrigin";
 import { snapBottomToCursor } from "./lib/dnd/snapBottomToCursor";
 import SHAPES from "./shapes.json";
 import { array, cn, getObjectKeys } from "./utils";
@@ -36,7 +32,7 @@ function Game() {
   return (
     <DndContext
       modifiers={[restrictToWindowEdges, snapBottomToCursor]}
-      collisionDetection={closestCenter}
+      collisionDetection={closestOrigin}
       onDragEnd={(event) => {
         if (!event.over || !event.active) return tiles;
         const { x, y } = event.over.data.current as { x: number; y: number };
