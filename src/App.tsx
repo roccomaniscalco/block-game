@@ -52,7 +52,7 @@ function Game() {
         setShapes({ ...shapes, [event.active.id]: null });
       }}
     >
-      <main className="flex h-full flex-col gap-5 p-5">
+      <main className="flex h-full flex-col gap-5 p-5 justify-end">
         <Board tiles={tiles} />
         <ShapePalette shapes={shapes} />
       </main>
