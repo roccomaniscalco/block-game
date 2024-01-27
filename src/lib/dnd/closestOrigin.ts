@@ -6,8 +6,8 @@ function distanceBetween(p1: Coordinates, p2: Coordinates) {
 }
 
 /**
- * Returns the closest rectangles from an array of rectangles to the corners of
- * another rectangle.
+ * Returns the closest origin (top left 0,0) from an array of 
+ * rectangles to the corners of another rectangle.
  */
 export const closestOrigin: CollisionDetection = ({
   collisionRect,
