@@ -23,6 +23,13 @@ function getCollisionId(
   })[0][0];
 }
 
+function getShapeCellCount(shape: number[][]) {
+  return shape.reduce(
+    (acc, row) => acc + row.reduce((acc, cell) => acc + cell, 0),
+    0,
+  );
+}
+
 export const closestShape: CollisionDetection = ({
   active,
   collisionRect,
@@ -57,5 +64,7 @@ export const closestShape: CollisionDetection = ({
     });
   });
 
-  return collisions;
+  return getShapeCellCount(active.data.current.shape) !== collisions.length
+    ? []
+    : collisions;
 };
