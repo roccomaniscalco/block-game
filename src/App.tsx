@@ -10,7 +10,7 @@ import { useState } from "react";
 import { closestShape } from "./lib/dnd/closestShape";
 import { snapBottomToCursor } from "./lib/dnd/snapBottomToCursor";
 import SHAPES from "./shapes.json";
-import { cn, getObjectKeys } from "./utils";
+import { cn, getObjectKeys, rotateMatrix } from "./utils";
 import { nanoid } from "nanoid";
 
 export default function App() {
@@ -25,7 +25,11 @@ function Game() {
   const getRandomShape = () => {
     const shapes = getObjectKeys(SHAPES);
     const randomShapeName = shapes[Math.floor(Math.random() * shapes.length)];
-    return SHAPES[randomShapeName];
+    let rotatedShape = SHAPES[randomShapeName];
+    while (Math.floor(Math.random() * 4)) {
+      rotatedShape = rotateMatrix(rotatedShape);
+    }
+    return rotatedShape;
   };
 
   const getRandomShapes = () => {
@@ -60,7 +64,7 @@ function Game() {
         });
         console.log(Object.values(shapes).filter(Boolean).length);
         if (Object.values(shapes).filter(Boolean).length === 1) {
-          setShapes(getRandomShapes())
+          setShapes(getRandomShapes());
         } else {
           setShapes({ ...shapes, [event.active.id]: null });
         }
@@ -96,7 +100,7 @@ type ShapePaletteProps = {
 };
 function ShapePalette(props: ShapePaletteProps) {
   return (
-    <div className="mx-auto flex h-32 min-h-32 w-full max-w-xl rounded-md border border-gray-700 ">
+    <div className="mx-auto flex h-40 min-h-40 w-full max-w-xl rounded-md border border-gray-700 ">
       {Object.entries(props.shapes).map(([key, value]) => (
         <Shape id={key} shape={value} key={key} />
       ))}
