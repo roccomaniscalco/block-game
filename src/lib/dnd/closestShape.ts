@@ -46,7 +46,7 @@ export const closestShape: CollisionDetection = ({
 
   (active.data.current as { shape: number[][] }).shape.forEach((row, y) => {
     row.forEach((tile, x) => {
-      if (tile === 0) return;
+      if (!tile) return;
       const droppableCoords = {
         x: collisionCoords.x + x,
         y: collisionCoords.y + y,
@@ -64,7 +64,9 @@ export const closestShape: CollisionDetection = ({
     });
   });
 
-  return getShapeCellCount(active.data.current.shape) !== collisions.length
+  return getShapeCellCount(
+    (active.data.current as { shape: number[][] }).shape,
+  ) !== collisions.length
     ? []
     : collisions;
 };
