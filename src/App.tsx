@@ -1,18 +1,25 @@
-import { DndContext, useDraggable, useDroppable } from "@dnd-kit/core";
+import {
+  DndContext,
+  useDndContext,
+  useDraggable,
+  useDroppable,
+} from "@dnd-kit/core";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { CSS, useCombinedRefs } from "@dnd-kit/utilities";
 import { useState } from "react";
-import { closestOrigin } from "./lib/dnd/closestOrigin";
+import { closestShape } from "./lib/dnd/closestShape";
 import { snapBottomToCursor } from "./lib/dnd/snapBottomToCursor";
 import SHAPES from "./shapes.json";
-import { array, cn, getObjectKeys } from "./utils";
+import { cn, getObjectKeys } from "./utils";
 
 export default function App() {
   return <Game />;
 }
 
 function Game() {
-  const INITIAL_TILES = array(9, array(9, false));
+  const INITIAL_TILES = Array.from({ length: 9 }).map(() =>
+    new Array(9).fill(false),
+  ) as boolean[][];
 
   const getRandomShape = () => {
     const shapes = getObjectKeys(SHAPES);
@@ -32,12 +39,16 @@ function Game() {
   return (
     <DndContext
       modifiers={[restrictToWindowEdges, snapBottomToCursor]}
-      collisionDetection={closestOrigin}
+      collisionDetection={closestShape}
       onDragEnd={(event) => {
-        if (!event.over || !event.active) return tiles;
-        const { x, y } = event.over.data.current as { x: number; y: number };
-        if (tiles[y][x]) return tiles;
-        setTiles(tiles.with(y, tiles[y].with(x, true)));
+        if (!event.collisions || !event.active) return tiles;
+        if (event.collisions.some((c) => !!tiles[c.data.y][c.data.x]))
+          return tiles;
+        const tilesCopy = structuredClone(tiles);
+        event.collisions.forEach((c) => {
+          tilesCopy[c.data.y][c.data.x] = true;
+        });
+        setTiles(tilesCopy);
         setShapes({ ...shapes, [event.active.id]: null });
       }}
     >
@@ -93,8 +104,12 @@ function Shape(props: ShapeProps) {
     isDragging,
   } = useDraggable({
     id: props.id,
+    data: { shape: props.shape },
   });
-  const { setNodeRef: setDroppableNodeRef } = useDroppable({ id: props.id });
+
+  const { setNodeRef: setDroppableNodeRef } = useDroppable({
+    id: props.id,
+  });
 
   const getTileRect = () =>
     document.getElementById("0,0")?.getClientRects()[0] ?? {
@@ -169,7 +184,8 @@ type TileProps = {
   isFilled: boolean;
 };
 export function Tile(props: TileProps) {
-  const { isOver, setNodeRef } = useDroppable({
+  const { collisions } = useDndContext();
+  const { setNodeRef } = useDroppable({
     id: `${props.x},${props.y}`,
     data: { x: props.x, y: props.y },
   });
@@ -188,7 +204,9 @@ export function Tile(props: TileProps) {
         "h-full w-full rounded-md",
         isLightSquare(props.y, props.x) ? "bg-gray-700" : "bg-gray-800",
         props.isFilled && "bg-red-400",
-        isOver && !props.isFilled && "brightness-150",
+        !props.isFilled &&
+          collisions?.some(({ id }) => id === `${props.x},${props.y}`) &&
+          "brightness-150",
       )}
     />
   );
