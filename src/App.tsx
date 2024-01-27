@@ -17,6 +17,40 @@ export default function App() {
   return <Game />;
 }
 
+function evaluateBoard(tiles: boolean[][]) {
+  let completions = 0;
+
+  tiles.forEach((row) => {
+    if (row.every((tile) => tile)) {
+      completions++;
+      tiles.splice(tiles.indexOf(row), 1, Array(9).fill(false));
+    }
+  });
+
+  tiles[0].forEach((_, x) => {
+    if (tiles.every((row) => row[x])) {
+      completions++;
+      tiles.forEach((row) => row.splice(x, 1, false));
+    }
+  });
+
+  for (let y = 0; y < tiles.length; y += 3) {
+    for (let x = 0; x < tiles[0].length; x += 3) {
+      const square = tiles.slice(y, y + 3).map((row) => row.slice(x, x + 3));
+      if (square.every((row) => row.every((tile) => tile))) {
+        completions++;
+        square.forEach((row, y2) => {
+          row.forEach((_, x2) => {
+            tiles[y2 + y][x2 + x] = false;
+          });
+        });
+      }
+    }
+  }
+
+  return { tiles, completions };
+}
+
 function Game() {
   const INITIAL_TILES = Array.from({ length: 9 }).map(() =>
     new Array(9).fill(false),
@@ -55,14 +89,14 @@ function Game() {
         if (!event.collisions || !event.active) return tiles;
         if (event.collisions.some((c) => !!tiles[c.data.y][c.data.x]))
           return tiles;
-        setTiles((prev) => {
-          const tilesCopy = structuredClone(prev);
-          event.collisions.forEach((c) => {
-            tilesCopy[c.data.y][c.data.x] = true;
-          });
-          return tilesCopy;
+
+        const tilesCopy = structuredClone(tiles);
+        event.collisions.forEach((c) => {
+          tilesCopy[c.data.y][c.data.x] = true;
         });
-        console.log(Object.values(shapes).filter(Boolean).length);
+        const { tiles: evaluatedTiles } = evaluateBoard(tilesCopy);
+        setTiles(evaluatedTiles);
+
         if (Object.values(shapes).filter(Boolean).length === 1) {
           setShapes(getRandomShapes());
         } else {
