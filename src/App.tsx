@@ -11,6 +11,7 @@ import { closestShape } from "./lib/dnd/closestShape";
 import { snapBottomToCursor } from "./lib/dnd/snapBottomToCursor";
 import SHAPES from "./shapes.json";
 import { cn, getObjectKeys } from "./utils";
+import { nanoid } from "nanoid";
 
 export default function App() {
   return <Game />;
@@ -27,14 +28,20 @@ function Game() {
     return SHAPES[randomShapeName];
   };
 
-  const initialShapes = {
-    1: getRandomShape(),
-    2: getRandomShape(),
-    3: getRandomShape(),
+  const getRandomShapes = () => {
+    return Array.from({ length: 3 }).reduce<Record<string, number[][] | null>>(
+      (acc) => {
+        const shape = getRandomShape();
+        acc[nanoid()] = shape;
+        return acc;
+      },
+      {},
+    );
   };
 
   const [tiles, setTiles] = useState(INITIAL_TILES);
-  const [shapes, setShapes] = useState(initialShapes);
+  const [shapes, setShapes] =
+    useState<Record<string, number[][] | null>>(getRandomShapes());
 
   return (
     <DndContext
@@ -44,15 +51,22 @@ function Game() {
         if (!event.collisions || !event.active) return tiles;
         if (event.collisions.some((c) => !!tiles[c.data.y][c.data.x]))
           return tiles;
-        const tilesCopy = structuredClone(tiles);
-        event.collisions.forEach((c) => {
-          tilesCopy[c.data.y][c.data.x] = true;
+        setTiles((prev) => {
+          const tilesCopy = structuredClone(prev);
+          event.collisions.forEach((c) => {
+            tilesCopy[c.data.y][c.data.x] = true;
+          });
+          return tilesCopy;
         });
-        setTiles(tilesCopy);
-        setShapes({ ...shapes, [event.active.id]: null });
+        console.log(Object.values(shapes).filter(Boolean).length);
+        if (Object.values(shapes).filter(Boolean).length === 1) {
+          setShapes(getRandomShapes())
+        } else {
+          setShapes({ ...shapes, [event.active.id]: null });
+        }
       }}
     >
-      <main className="flex h-full flex-col gap-5 p-5 justify-end">
+      <main className="flex h-full flex-col justify-end gap-5 p-5">
         <Board tiles={tiles} />
         <ShapePalette shapes={shapes} />
       </main>
