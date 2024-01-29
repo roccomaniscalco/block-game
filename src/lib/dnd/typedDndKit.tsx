@@ -89,7 +89,3 @@ const TypesafeDndContext = OriginalDndContext as React.NamedExoticComponent<DndC
 export function DndContext(props: DndContextTypesafeProps) {
   return <TypesafeDndContext {...props} />;
 }
-interface TypesafeDndContextReturnType extends ReturnType<typeof useOriginalDndContext> {
-  
-}
-export const useDndContext = useOriginalDndContext as () => ReturnType<typeof useOriginalDndContext>;

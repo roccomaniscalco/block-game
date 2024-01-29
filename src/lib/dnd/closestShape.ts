@@ -35,7 +35,7 @@ export const closestShape: CollisionDetection = ({
   collisionRect,
   droppableRects,
 }) => {
-  if (!active.data.current) return [];
+  if (!active.data.current?.shape) return [];
 
   const collisionOrigin = { x: collisionRect.left, y: collisionRect.top };
   const collisionId = getCollisionId(collisionOrigin, droppableRects) as string;
