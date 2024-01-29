@@ -1,6 +1,6 @@
-import { Collision, CollisionDetection } from "@dnd-kit/core";
 import { RectMap } from "@dnd-kit/core/dist/store";
 import { Coordinates } from "@dnd-kit/utilities";
+import { CollisionDetection, Collision } from "./typedDndKit";
 
 function distanceBetween(p1: Coordinates, p2: Coordinates) {
   return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
@@ -35,6 +35,8 @@ export const closestShape: CollisionDetection = ({
   collisionRect,
   droppableRects,
 }) => {
+  if (!active.data.current) return [];
+
   const collisionOrigin = { x: collisionRect.left, y: collisionRect.top };
   const collisionId = getCollisionId(collisionOrigin, droppableRects) as string;
   const collisionCoords = {
@@ -44,7 +46,7 @@ export const closestShape: CollisionDetection = ({
 
   const collisions: Collision[] = [];
 
-  (active.data.current as { shape: number[][] }).shape.forEach((row, y) => {
+  active.data.current.shape.forEach((row, y) => {
     row.forEach((tile, x) => {
       if (!tile) return;
       const droppableCoords = {
@@ -64,9 +66,7 @@ export const closestShape: CollisionDetection = ({
     });
   });
 
-  return getShapeCellCount(
-    (active.data.current as { shape: number[][] }).shape,
-  ) !== collisions.length
+  return getShapeCellCount(active.data.current.shape) !== collisions.length
     ? []
     : collisions;
 };

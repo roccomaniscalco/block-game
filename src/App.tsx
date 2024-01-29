@@ -1,9 +1,4 @@
-import {
-  DndContext,
-  useDndContext,
-  useDraggable,
-  useDroppable,
-} from "@dnd-kit/core";
+import { useDndContext } from "@dnd-kit/core";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { CSS, useCombinedRefs } from "@dnd-kit/utilities";
 import { useState } from "react";
@@ -12,6 +7,7 @@ import { snapBottomToCursor } from "./lib/dnd/snapBottomToCursor";
 import SHAPES from "./shapes.json";
 import { cn, getObjectKeys, rotateMatrix } from "./utils";
 import { nanoid } from "nanoid";
+import { DndContext, useDroppable, useDraggable } from "./lib/dnd/typedDndKit";
 
 export default function App() {
   return <Game />;
@@ -236,9 +232,10 @@ type TileProps = {
   isFilled: boolean;
 };
 export function Tile(props: TileProps) {
+  const droppableId = `${props.x},${props.y}`;
   const { collisions } = useDndContext();
   const { setNodeRef } = useDroppable({
-    id: `${props.x},${props.y}`,
+    id: droppableId,
     data: { x: props.x, y: props.y },
   });
 
@@ -250,14 +247,14 @@ export function Tile(props: TileProps) {
 
   return (
     <div
-      id={`${props.x},${props.y}`}
+      id={droppableId}
       ref={setNodeRef}
       className={cn(
         "h-full w-full rounded-md",
         isLightSquare(props.y, props.x) ? "bg-gray-700" : "bg-gray-800",
         props.isFilled && "bg-red-400",
         !props.isFilled &&
-          collisions?.some(({ id }) => id === `${props.x},${props.y}`) &&
+          collisions?.some(({ id }) => id === droppableId) &&
           "brightness-150",
       )}
     />
