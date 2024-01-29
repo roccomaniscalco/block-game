@@ -14,37 +14,46 @@ export default function App() {
 }
 
 function evaluateBoard(tiles: boolean[][]) {
-  let completions = 0;
+  let completionCount = 0;
+  const completedTiles: { x: number; y: number }[] = [];
 
-  tiles.forEach((row) => {
+  // Check for completed rows
+  tiles.forEach((row, y) => {
     if (row.every((tile) => tile)) {
-      completions++;
-      tiles.splice(tiles.indexOf(row), 1, Array(9).fill(false));
+      completionCount++;
+      row.forEach((_, x) => completedTiles.push({ x, y }));
     }
   });
 
+  // Check for completed columns
   tiles[0].forEach((_, x) => {
     if (tiles.every((row) => row[x])) {
-      completions++;
-      tiles.forEach((row) => row.splice(x, 1, false));
+      completionCount++;
+      tiles.forEach((_, y) => completedTiles.push({ x, y }));
     }
   });
 
+  // Check for completed squares
   for (let y = 0; y < tiles.length; y += 3) {
     for (let x = 0; x < tiles[0].length; x += 3) {
       const square = tiles.slice(y, y + 3).map((row) => row.slice(x, x + 3));
       if (square.every((row) => row.every((tile) => tile))) {
-        completions++;
-        square.forEach((row, y2) => {
-          row.forEach((_, x2) => {
-            tiles[y2 + y][x2 + x] = false;
-          });
-        });
+        completionCount++;
+        square.forEach((row, squareY) =>
+          row.forEach((_, squareX) =>
+            completedTiles.push({ x: x + squareX, y: y + squareY }),
+          ),
+        );
       }
     }
   }
 
-  return { tiles, completions };
+  // Remove completed tiles
+  completedTiles.forEach(({ x, y }) => {
+    tiles[y][x] = false;
+  });
+
+  return { tiles, completions: completionCount };
 }
 
 function Game() {
