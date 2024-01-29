@@ -1,8 +1,10 @@
 import {
   Active,
+  DataRef,
+  DndContextProps,
+  DroppableContainer,
   Collision as OriginalCollision,
   CollisionDetection as OriginalCollisionDetection,
-  DndContextProps,
   DndContext as OriginalDndContext,
   Over,
   Translate,
@@ -10,9 +12,6 @@ import {
   UseDroppableArguments,
   useDraggable as useOriginalDraggable,
   useDroppable as useOriginalDroppable,
-  DroppableContainer,
-  DataRef,
-  useDndContext as useOriginalDndContext,
 } from "@dnd-kit/core";
 import { Arguments } from "@dnd-kit/utilities";
 
